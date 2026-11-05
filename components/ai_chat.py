@@ -44,6 +44,7 @@ if question:
                 st.session_state["farm_profile"],
                 current,
                 references,
+                st.session_state["response_language"],
             )
             try:
                 with st.chat_message("assistant", avatar="🌿"):

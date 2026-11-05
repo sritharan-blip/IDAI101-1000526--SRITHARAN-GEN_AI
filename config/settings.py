@@ -11,8 +11,21 @@ APP_ICON = "🌱"
 DATA_DIR = Path(os.environ.get("GENAI_DATA_DIR", "data"))
 ASSET_DIR = Path(__file__).resolve().parents[1] / "assets"
 STYLESHEET = Path(__file__).resolve().parents[1] / "styles" / "global.css"
-DEFAULT_MODEL = "gemini-2.5-flash"
-MODEL_FALLBACKS = (DEFAULT_MODEL, "gemini-2.5-flash-lite")
+DEFAULT_MODEL = "gemini-4-argon"
+MODEL_FALLBACKS = (
+    DEFAULT_MODEL,
+    "gemini-3.8-flash",
+    "gemini-3.6-flash",
+    "gemini-3.5-flash-lite",
+    "gemini-3.1-flash-lite",
+)
+MODEL_DESCRIPTIONS = {
+    "gemini-4-argon": "Flagship reasoning · text, image, audio, video, and PDF",
+    "gemini-3.8-flash": "Newest Flash · high capability and speed",
+    "gemini-3.6-flash": "Stable Flash · balanced general-purpose option",
+    "gemini-3.5-flash-lite": "Flash-Lite · fast and cost-efficient",
+    "gemini-3.1-flash-lite": "Flash-Lite · stable, low-cost alternative",
+}
 TRUSTED_SOURCES = {
     "FAO": "https://www.fao.org/",
     "India agriculture": "https://agriwelfare.gov.in/",

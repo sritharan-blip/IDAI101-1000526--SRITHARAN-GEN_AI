@@ -36,6 +36,7 @@ import streamlit as st  # noqa: E402
 
 from google import genai as genai_new
 from google.genai import types as genai_types
+from config.settings import MODEL_FALLBACKS
 
 # ─────────────────────────────────────────────────────────────────────────────
 # 0. CONFIG
@@ -49,13 +50,7 @@ MANUAL_LOG = DATA_DIR / "manual_checklist.csv"
 
 # Used when no key is available yet or the API model catalog cannot be loaded.
 # With a key, the picker is populated from the models enabled for that key.
-MODEL_CHOICES = [
-    "gemini-4-argon",
-    "gemini-3.8-flash",
-    "gemini-3.6-flash",
-    "gemini-3.5-flash-lite",
-    "gemini-3.1-flash-lite",
-]
+MODEL_CHOICES = list(MODEL_FALLBACKS)
 MAX_QUERIES_PER_SESSION = 40  # protects the free API quota on a public deployment
 COOLDOWN_SECONDS = 2
 
@@ -68,9 +63,6 @@ WATER = ["Rain-fed only", "Limited irrigation", "Good irrigation"]
 FARM_SIZES = ["Small (under 2 ha)", "Medium (2–10 ha)", "Large (over 10 ha)"]
 PREFERENCES = ["Organic methods", "Low water use", "Low cost", "High profit", "Pest-resistant",
                "Fast-growing", "Beginner-friendly"]
-LANGUAGES = ["English", "Hindi (हिन्दी)", "French (Français)", "Twi", "Hausa", "Tamil (தமிழ்)",
-             "Punjabi (ਪੰਜਾਬੀ)", "Marathi (मराठी)"]
-
 COUNTRIES = {
     "India": {
         "flag": "🇮🇳",
@@ -274,7 +266,7 @@ def build_prompt(inp: dict, version: str, weather_text: str = "") -> str:
     crop = inp.get("crop") or "not specified"
     if version == "V1":  # naive baseline, intentionally minimal
         q = inp.get("question") or f"Give me advice on {focus_label}"
-        return f"{q} for farming in {place} in {inp['month']}."
+        return f"{q} for farming in {place} in {inp['month']}. Answer in {inp['language']}."
     prefs = ", ".join(inp["preferences"]) or "none"
     authority = COUNTRIES.get(inp["country"], COUNTRIES["Other"])["authority"]
     return f"""You are AgroNova's Smart Farming Assistant, an agronomy adviser for farmers with little formal education.
@@ -303,7 +295,8 @@ RULES
 6. If information is missing or you are unsure, say so, set confidence to "Low" and advise checking with
    {authority}.
 7. Respect the farmer's preferences and stay realistic for their farm size and water access.
-8. Write ALL text values in {inp['language']}. Keep the JSON keys in English.
+8. Write narrative text values in {inp['language']}. Keep JSON keys and confidence value in English.
+   Confidence must be exactly High, Medium, or Low.
 
 OUTPUT: return ONLY valid JSON, exactly in this shape (no markdown fences):
 {SCHEMA}"""
@@ -321,8 +314,6 @@ def _generate(name: str, prompt: str, api_key: str, temperature: float, max_toke
     cfg = {"temperature": temperature, "max_output_tokens": max_tokens}
     if json_mode:
         cfg["response_mime_type"] = "application/json"
-    if "flash" in name and "2.5" in name:
-        cfg["thinking_config"] = genai_types.ThinkingConfig(thinking_budget=0)
     client = genai_new.Client(api_key=api_key)
     return (client.models.generate_content(
         model=name,
@@ -806,12 +797,17 @@ with st.sidebar:
     if not api_key and not demo:
         st.error("Add a Gemini API key or switch on Demo mode.")
     st.markdown("##### Model settings")
-    model_pick = st.selectbox("Gemini model", model_choices, index=0)
+    model_pick = st.selectbox(
+        "Gemini model",
+        model_choices,
+        index=0,
+        help="Gemini 4 Argon is the newest flagship; Flash is faster and Flash-Lite is the lower-cost option.",
+    )
     custom_model = st.text_input("…or custom model name", placeholder="e.g. gemini-4-argon")
     temperature = st.slider("Temperature (creativity)", 0.0, 1.5, 0.4, 0.1,
                             help="Lower = safer, more consistent. Higher = more varied.")
     max_tokens = st.slider("Max response length (tokens)", 512, 4096, 2048, 256)
-    language = st.selectbox("Answer language", LANGUAGES)
+    language = st.session_state["response_language"]
     st.markdown("##### Prompt version")
     version = st.radio("Prompt", ["V2", "V1"], horizontal=True,
                        format_func=lambda v: "V2 Optimised" if v == "V2" else "V1 Baseline",
@@ -835,6 +831,8 @@ st.markdown(
 if CFG["demo"]:
     st.info("🧪 **Demo mode** is on – answers come from built-in samples, not Gemini. "
             "Add your API key in the sidebar for live AI advice.")
+    if CFG["language"] != "English":
+        st.warning("Built-in demo samples are in English. Live Gemini answers use the selected response language.")
 
 tab_adv, tab_val, tab_ins, tab_about = st.tabs(["🌱 Advisor", "🧪 Validation Lab", "📊 Insights", "ℹ️ About"])
 

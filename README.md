@@ -23,9 +23,16 @@ scenario. The original Advisor, Validation Lab, and Insights workflows remain av
 | 📷 | **Crop health scanner** – multimodal Gemini JSON assessment with confidence, cautious treatment notes, and scan history | New |
 | 📈 | **Yield & finance simulator** – interactive rainfall/fertilizer/price scenarios with a dual-axis Plotly chart | New |
 | 📄 | **Farm action plan PDF** – exports the saved profile, weather, scans, and scenario from the current session | New |
-| 🌍 | **Multilingual answers** (Hindi, French, Twi, Hausa, Tamil, Punjabi, Marathi) | extra |
+| 🌍 | **Multilingual AI answers and crop scans** – all 22 Indian scheduled languages plus English, Arabic, Chinese, French, German, Japanese, Portuguese, Russian, Spanish, Swahili, Twi, and Hausa | extra |
 | 💬 | **Follow-up questions**, **download advice**, **confidence level**, **safety warnings** | extra |
 | 🛡️ | Session rate limit & cool-down, API key via Secrets, live Gemini model list for the entered key, fallback, and demo mode in the preserved workflow | Existing + new |
+
+### Gemini model options
+
+- `gemini-4-argon` – newest flagship reasoning model and the default.
+- `gemini-3.8-flash` and `gemini-3.6-flash` – faster general-purpose choices.
+- `gemini-3.5-flash-lite` and `gemini-3.1-flash-lite` – cost-efficient choices.
+- With a Gemini API key, the picker also lists models available to that key. A custom model ID can be entered when needed.
 
 ## Architecture
 
@@ -90,7 +97,7 @@ Example (input: *"What to grow in Rajasthan in August?"*):
 ## Step 6 – Deployment
 - `app.py` – app router · `requirements.txt` – Streamlit, Gemini, LangChain, Plotly, Folium, PDF and analytics dependencies
 - Hosted on Streamlit Community Cloud from this GitHub repo; API key stored in **Secrets** (never in code).
-- The app uses Google's current `google-genai` SDK and loads text-generation models available to your API key. Add the key as `GEMINI_API_KEY`.
+- The app uses Google's `google-genai` SDK, defaults to Gemini 4 Argon, and offers newer Flash and cost-efficient Flash-Lite options. With an API key, the picker lists models enabled for that key. Add the key as `GEMINI_API_KEY`.
 - **Cross-device testing:** record results below.
 
 | Device / browser | Result |
@@ -108,7 +115,7 @@ pip install -r requirements.txt
 streamlit run app.py
 ```
 
-Set `GEMINI_API_KEY` in the environment or configure Streamlit Secrets (`.streamlit/secrets.toml` locally; never commit it). The original Advisor page supports demo mode without a key; live chat and image analysis require one.
+Set `GEMINI_API_KEY` in the environment or configure Streamlit Secrets (`.streamlit/secrets.toml` locally; never commit it). Choose an AI response language in the sidebar; the setting applies to chat, crop scans, and the Advisor. The app interface itself remains in English. The original Advisor page supports demo mode without a key; live chat and image analysis require one.
 
 ### Docker
 

@@ -9,14 +9,21 @@ from utils.cache_handlers import get_gemini_client
 from .llm_engine import get_model_candidates, is_model_unavailable_error
 
 
-def analyze_crop_image(image_bytes: bytes, mime_type: str, api_key: str, model: str) -> dict:
+def analyze_crop_image(
+    image_bytes: bytes,
+    mime_type: str,
+    api_key: str,
+    model: str,
+    response_language: str = "English",
+) -> dict:
     prompt = (
         "Inspect this crop image for visible symptoms. Do not claim certainty from an image alone. "
         'Respond only as JSON with exactly these fields: {"disease":"","confidence":0,'
         '"treatment_organic":[],"treatment_chemical":[],"quarantine_required":false}. '
         "Confidence must be an integer from 0 to 100. If uncertain, say 'Uncertain — consult a local "
         "agronomist' and use low confidence. Do not give product brands or exact chemical doses. "
-        "Any chemical discussion must advise local confirmation and following the registered product label."
+        "Any chemical discussion must advise local confirmation and following the registered product label. "
+        f"Write every JSON string value in {response_language}; keep JSON keys in English."
     )
     client = get_gemini_client(api_key)
     last_error: Exception | None = None

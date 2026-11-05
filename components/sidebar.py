@@ -4,7 +4,8 @@ import hashlib
 
 import streamlit as st
 
-from config.settings import MODEL_FALLBACKS, get_api_key, has_secret_api_key
+from config.languages import RESPONSE_LANGUAGES, format_language_option
+from config.settings import MODEL_DESCRIPTIONS, MODEL_FALLBACKS, get_api_key, has_secret_api_key
 from services.llm_engine import list_models
 from utils.pdf_generator import generate_farm_report
 
@@ -20,6 +21,13 @@ def render_sidebar() -> None:
         )
         st.session_state["active_theme"] = "dark" if dark else "light"
         st.divider()
+
+        st.selectbox(
+            "AI response language",
+            RESPONSE_LANGUAGES,
+            format_func=format_language_option,
+            key="response_language",
+        )
 
         st.markdown("#### Your farm")
         profile = st.session_state["farm_profile"]
@@ -79,7 +87,15 @@ def render_sidebar() -> None:
             st.session_state["model_catalog_key"] = catalog_key
         elif st.session_state.get("selected_gemini_model") not in model_options:
             st.session_state["selected_gemini_model"] = model_options[0]
-        st.selectbox("Gemini model", model_options, key="selected_gemini_model")
+        st.selectbox(
+            "Gemini model",
+            model_options,
+            key="selected_gemini_model",
+            help="The newest model is selected by default. Choose a faster or lower-cost option if preferred.",
+        )
+        description = MODEL_DESCRIPTIONS.get(st.session_state["selected_gemini_model"])
+        if description:
+            st.caption(description)
         st.text_input(
             "Custom model ID (optional)",
             key="custom_model_id",

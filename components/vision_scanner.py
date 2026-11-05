@@ -23,11 +23,12 @@ upload = st.file_uploader("Crop photo", type=["jpg", "jpeg", "png", "webp"],
                           label_visibility="collapsed", max_upload_size=10)
 if upload:
     image = upload.getvalue()
+    response_language = st.session_state["response_language"]
     if len(image) > 10 * 1024 * 1024:
         st.error("This image is larger than 10 MB. Please upload a smaller crop photo.")
     else:
         st.image(image, caption=upload.name, width=480)
-        fingerprint = hashlib.sha256(image).hexdigest()
+        fingerprint = hashlib.sha256(response_language.encode("utf-8") + b"\0" + image).hexdigest()
         completed = next(
             (scan for scan in st.session_state["disease_scans"]
              if scan.get("fingerprint") == fingerprint),
@@ -49,6 +50,7 @@ if upload:
                                 upload.type or "image/jpeg",
                                 api_key,
                                 get_model(),
+                                response_language,
                             )
                             result["fingerprint"] = fingerprint
                             st.session_state["disease_scans"].append(result)
