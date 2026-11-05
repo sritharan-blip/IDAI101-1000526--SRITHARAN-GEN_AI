@@ -118,82 +118,7 @@ DISCLAIMER = ("⚠️ AI-generated advice can be wrong. Check important decision
               "with a local agriculture expert before acting.")
 
 # ─────────────────────────────────────────────────────────────────────────────
-# 1. STYLING
-# ─────────────────────────────────────────────────────────────────────────────
-st.markdown(
-    """
-<style>
-.stApp {background: radial-gradient(ellipse at 85% 0%, rgba(116, 196, 159, .16), transparent 34%),
-         linear-gradient(145deg, #f8fbf8 0%, #eff6f0 54%, #f5f8f2 100%);}
-.block-container {padding-top: 1.7rem; max-width: 1380px;}
-[data-testid="stSidebar"] {background: linear-gradient(155deg, rgba(12, 48, 37, .98), rgba(22, 91, 67, .95));}
-[data-testid="stSidebar"] > div:first-child {background: transparent;}
-[data-testid="stSidebar"] h1, [data-testid="stSidebar"] h2,
-[data-testid="stSidebar"] h3, [data-testid="stSidebar"] p,
-[data-testid="stSidebar"] label, [data-testid="stSidebar"] .stCaption {
-    color: #eef9f2;
-}
-.hero {background: linear-gradient(120deg, rgba(10, 69, 49, .96), rgba(28, 132, 91, .88) 58%, rgba(132, 189, 105, .82));
-       border: 1px solid rgba(255,255,255,.35); border-radius: 24px; padding: 1.55rem 1.8rem;
-       color: #fff; margin-bottom: 1.15rem; box-shadow: 0 18px 48px rgba(13, 69, 48, .16);
-       backdrop-filter: blur(18px);}
-.hero h1 {margin: 0; font-size: 2.1rem; color:#fff; padding:0;}
-.hero p {margin: .35rem 0 0 0; opacity: .95; font-size: 1.02rem;}
-.pill {display:inline-block; padding:.12rem .6rem; border-radius:999px; font-size:.78rem;
-       background:rgba(46,125,50,.14); color:#2e7d32; margin-right:.3rem; font-weight:600;}
-.pill.warn {background:rgba(239,108,0,.14); color:#e65100;}
-.pill.bad {background:rgba(198,40,40,.14); color:#c62828;}
-.summary {border-left: 5px solid #43a879; background: rgba(255,255,255,.68);
-          padding: .9rem 1.05rem; border-radius: 16px; font-size: 1.05rem;
-          box-shadow: 0 8px 26px rgba(31, 83, 58, .07); backdrop-filter: blur(14px);}
-.why {color:#33691e; font-size:.95rem;}
-.small-note {font-size:.85rem; opacity:.8;}
-.stTabs [data-baseweb="tab-list"] {gap: .35rem; padding: .35rem; border: 1px solid rgba(78, 132, 99, .17);
-    border-radius: 18px; background: rgba(255,255,255,.56); backdrop-filter: blur(18px);
-    box-shadow: 0 8px 28px rgba(27, 74, 51, .07);}
-.stTabs button[role="tab"] {border-radius: 13px; padding: .55rem .85rem;}
-.stTabs button[role="tab"][aria-selected="true"] {background: rgba(38, 133, 91, .13); color: #146343;}
-div[data-baseweb="select"] > div, .stTextInput input, .stTextArea textarea, .stNumberInput input {
-    border-radius: 14px; border: 1px solid rgba(68, 122, 91, .2);
-    background: rgba(255,255,255,.67); backdrop-filter: blur(16px);
-    box-shadow: inset 0 1px 0 rgba(255,255,255,.72), 0 5px 16px rgba(31,83,58,.045);
-}
-[data-testid="stSidebar"] div[data-baseweb="select"] > div,
-[data-testid="stSidebar"] .stTextInput input {
-    background: rgba(244,255,248,.12); border-color: rgba(220,255,234,.2); color: #f2fff7;
-}
-[data-testid="stSidebar"] input::placeholder {color: rgba(239,255,245,.56);}
-[data-baseweb="popover"], [data-baseweb="menu"] {
-    border: 1px solid rgba(255,255,255,.66); border-radius: 16px;
-    background: rgba(248, 253, 249, .84); backdrop-filter: blur(24px) saturate(1.45);
-    box-shadow: 0 18px 54px rgba(16, 57, 40, .2); overflow: hidden;
-}
-[data-baseweb="popover"] [role="option"], [data-baseweb="menu"] li {
-    border-radius: 10px; margin: 3px 6px; transition: background .16s ease, color .16s ease;
-}
-[data-baseweb="popover"] [role="option"]:hover, [data-baseweb="menu"] li:hover {
-    background: rgba(57, 151, 105, .14); color: #145b3e;
-}
-.stMultiSelect [data-baseweb="tag"] {border-radius: 999px; background: rgba(48, 139, 94, .14);}
-.stRadio [role="radiogroup"] label {padding: .35rem .55rem; border-radius: 12px;}
-.stButton button, .stDownloadButton button, [data-testid="stPopover"] button {
-    border-radius: 14px; transition: transform .16s ease, box-shadow .16s ease;
-}
-.stButton button:hover, .stDownloadButton button:hover, [data-testid="stPopover"] button:hover {
-    transform: translateY(-1px); box-shadow: 0 8px 20px rgba(24, 103, 70, .16);
-}
-[data-testid="stExpander"], [data-testid="stMetric"] {
-    border-radius: 16px; border-color: rgba(68, 122, 91, .17);
-    background: rgba(255,255,255,.48); backdrop-filter: blur(14px);
-}
-@media (max-width: 640px){ .hero h1{font-size:1.5rem;} .hero p{font-size:.92rem;} }
-</style>
-""",
-    unsafe_allow_html=True,
-)
-
-# ─────────────────────────────────────────────────────────────────────────────
-# 2. SMALL HELPERS (logging, secrets)
+# 1. SMALL HELPERS (logging, secrets)
 # ─────────────────────────────────────────────────────────────────────────────
 
 def append_csv(path: Path, row: dict) -> None:
@@ -537,19 +462,38 @@ def weather_summary(w: dict) -> str:
 
 def weather_chart(w: dict):
     df = w["df"]
-    fig, ax = plt.subplots(figsize=(6.4, 2.8), facecolor="white")
+    dark = st.session_state.get("active_theme") == "dark"
+    background = "#102332" if dark else "#ffffff"
+    foreground = "#e6f1ff" if dark else "#172b24"
+    grid = "#34495b" if dark else "#dce8e1"
+    fig, ax = plt.subplots(figsize=(6.4, 2.8), facecolor=background)
+    ax.set_facecolor(background)
     ax.bar(df["date"], df["rain"], color="#64b5f6", width=0.6, label="Rain (mm)")
-    ax.set_ylabel("Rain (mm)")
+    ax.set_ylabel("Rain (mm)", color=foreground)
     ax2 = ax.twinx()
+    ax2.set_facecolor(background)
     ax2.plot(df["date"], df["max"], color="#e53935", marker="o", label="High °C")
     ax2.plot(df["date"], df["min"], color="#1e88e5", marker="o", label="Low °C")
-    ax2.set_ylabel("Temperature °C")
+    ax2.set_ylabel("Temperature °C", color=foreground)
     ax.set_xticks(df["date"])
-    ax.set_xticklabels(df["date"].dt.strftime("%a %d"), fontsize=8)
+    ax.set_xticklabels(df["date"].dt.strftime("%a %d"), fontsize=8, color=foreground)
+    for axis in (ax, ax2):
+        axis.tick_params(colors=foreground)
+        axis.grid(axis="y", color=grid, alpha=.5)
+        for spine in axis.spines.values():
+            spine.set_color(grid)
     h1, l1 = ax.get_legend_handles_labels()
     h2, l2 = ax2.get_legend_handles_labels()
-    ax.legend(h1 + h2, l1 + l2, loc="upper center", ncol=3, fontsize=8, frameon=False,
-              bbox_to_anchor=(0.5, 1.2))
+    ax.legend(
+        h1 + h2,
+        l1 + l2,
+        loc="upper center",
+        ncol=3,
+        fontsize=8,
+        frameon=False,
+        bbox_to_anchor=(0.5, 1.2),
+        labelcolor=foreground,
+    )
     for a in (ax, ax2):
         a.spines["top"].set_visible(False)
     fig.tight_layout()
@@ -824,7 +768,7 @@ CFG = {"api_key": api_key, "demo": demo or not api_key, "model": custom_model.st
 # 12. PAGE
 # ─────────────────────────────────────────────────────────────────────────────
 st.markdown(
-    """<div class="hero"><h1>🌾 Smart Farming Assistant</h1>
+    """<div class="hero-panel"><h1>🌾 Smart Farming Assistant</h1>
     <p>Clear, region-specific farming advice powered by Gemini — with the <b>reason</b> behind every tip.
     Built for farmers in 🇮🇳 India · 🇬🇭 Ghana · 🇨🇦 Canada.</p></div>""",
     unsafe_allow_html=True)
@@ -1005,14 +949,30 @@ with tab_val:
             m[1].metric("Avg score – V1 baseline", f"{avg['V1']:.1f} / 5")
             m[2].metric("Improvement", f"+{avg.get('V2', 0) - avg['V1']:.1f}", delta_color="normal")
         pivot = vdf.pivot_table(index="test", columns="version", values="score")
-        fig, ax = plt.subplots(figsize=(7, 3), facecolor="white")
+        dark = st.session_state.get("active_theme") == "dark"
+        background = "#102332" if dark else "#ffffff"
+        foreground = "#e6f1ff" if dark else "#172b24"
+        grid = "#34495b" if dark else "#dce8e1"
+        fig, ax = plt.subplots(figsize=(7, 3), facecolor=background)
+        ax.set_facecolor(background)
         pivot.plot(kind="bar", ax=ax, color={"V1": "#bdbdbd", "V2": "#2e7d32"}, rot=0, width=0.7)
         ax.set_ylim(0, 5.5)
-        ax.set_ylabel("Checklist score (/5)")
+        ax.set_ylabel("Checklist score (/5)", color=foreground)
         ax.set_xlabel("")
-        ax.legend(frameon=False, loc="upper center", ncol=2, bbox_to_anchor=(0.5, 1.15))
+        ax.legend(
+            frameon=False,
+            loc="upper center",
+            ncol=2,
+            bbox_to_anchor=(0.5, 1.15),
+            labelcolor=foreground,
+        )
+        ax.tick_params(colors=foreground)
+        ax.yaxis.grid(color=grid, alpha=.5)
+        ax.set_axisbelow(True)
         for s in ("top", "right"):
             ax.spines[s].set_visible(False)
+        for s in ("left", "bottom"):
+            ax.spines[s].set_color(grid)
         fig.tight_layout()
         st.pyplot(fig, width="stretch")
         show = vdf.drop(columns=["output", "error", "model"]).copy()

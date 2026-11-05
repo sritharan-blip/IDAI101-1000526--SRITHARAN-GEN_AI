@@ -82,7 +82,7 @@ with st.spinner("Refreshing local forecast…"):
     except Exception as exc:
         st.error(f"Could not load live weather from Open-Meteo: {str(exc)[:220]}", icon="🌦️")
 
-col1, col2, col3 = st.columns([1, 2, 1], gap="medium")
+col1, col2 = st.columns(2, gap="medium")
 current = weather.get("current", {}) if weather else {}
 with col1:
     if weather:
@@ -90,14 +90,15 @@ with col1:
                       "Current local observation · Open-Meteo", "🌡️")
     else:
         render_metric("Weather", "Unavailable", "Check coordinates or try again later", "🌦️")
-with col3:
+with col2:
     if weather:
         render_metric("Humidity", f"{current.get('relative_humidity_2m', '—')}%",
                       f"Wind {current.get('wind_speed_10m', '—')} km/h", "💧")
     else:
         render_metric("Humidity", "Unavailable", "Waiting for a weather snapshot", "💧")
 
-with col2:
+animation_column = st.columns([1, 2, 1], gap="medium")[1]
+with animation_column:
     animation_path = ASSET_DIR / "farm_lottie.json"
     try:
         with animation_path.open(encoding="utf-8") as file:

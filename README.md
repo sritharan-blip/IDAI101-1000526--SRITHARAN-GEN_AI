@@ -27,6 +27,8 @@ scenario. The original Advisor, Validation Lab, and Insights workflows remain av
 | 💬 | **Follow-up questions**, **download advice**, **confidence level**, **safety warnings** | extra |
 | 🛡️ | Session rate limit & cool-down, API key via Secrets, live Gemini model list for the entered key, fallback, and demo mode in the preserved workflow | Existing + new |
 
+The sidebar groups appearance and language, farm details, Gemini settings, and the downloadable action plan. Its light/dark switch updates the full app palette, including the shared Advisor page, with reduced-motion support.
+
 ### Gemini model options
 
 - `gemini-4-argon` – newest flagship reasoning model and the default.

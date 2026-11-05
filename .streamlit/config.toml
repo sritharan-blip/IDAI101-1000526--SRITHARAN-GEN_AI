@@ -1,10 +1,24 @@
 [theme]
 base = "dark"
-primaryColor = "#64ffda"
+primaryColor = "#047857"
 backgroundColor = "#071526"
-secondaryBackgroundColor = "#0f2336"
+secondaryBackgroundColor = "#102332"
 textColor = "#e6f1ff"
+linkColor = "#34d399"
+borderColor = "#294154"
+codeBackgroundColor = "#102332"
+codeTextColor = "#e6f1ff"
+showWidgetBorder = true
+showSidebarBorder = true
+baseRadius = "medium"
+buttonRadius = "medium"
 font = "sans serif"
+
+[theme.sidebar]
+backgroundColor = "#0a192f"
+secondaryBackgroundColor = "#102332"
+textColor = "#e6f1ff"
+borderColor = "#294154"
 
 [server]
 headless = true

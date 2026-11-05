@@ -20,10 +20,14 @@ def inject_global_styles() -> None:
         "--surface:rgba(15,35,54,.72);--surface-strong:rgba(18,45,64,.9);"
         "--surface-border:rgba(190,231,220,.13);--text:#e6f1ff;--muted:#9fb3c8;"
         "--accent:#64ffda;--accent-strong:#10b981;--shadow:rgba(0,0,0,.23);"
+        "--glow-one:rgba(16,185,129,.16);--glow-two:rgba(100,255,218,.06);"
+        "--focus-ring:rgba(16,185,129,.28);"
         if theme == "dark"
         else "color-scheme:light;--app-bg:#f8fafc;--app-bg-2:#edf5f0;"
-        "--surface:rgba(255,255,255,.68);--surface-strong:rgba(255,255,255,.9);"
-        "--surface-border:rgba(30,75,58,.13);--text:#0f172a;--muted:#546477;"
-        "--accent:#059669;--accent-strong:#10b981;--shadow:rgba(20,45,35,.1);"
+        "--surface:#ffffff;--surface-strong:#f1f6f3;"
+        "--surface-border:rgba(25,65,48,.16);--text:#172b24;--muted:#52665e;"
+        "--accent:#047857;--accent-strong:#047857;--shadow:rgba(20,45,35,.09);"
+        "--glow-one:rgba(16,185,129,.10);--glow-two:rgba(14,116,94,.05);"
+        "--focus-ring:rgba(4,120,87,.2);"
     )
     st.markdown(f"<style>{css}\n:root{{{colors}}}</style>", unsafe_allow_html=True)
