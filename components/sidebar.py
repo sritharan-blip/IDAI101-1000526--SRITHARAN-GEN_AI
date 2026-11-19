@@ -51,6 +51,9 @@ def render_sidebar() -> None:
             )
             ph = st.slider("Soil pH (if known)", 3.0, 10.0,
                            float(st.session_state["farm_profile"]["ph"]), 0.1, key="profile_ph")
+            if (lat, lon) != (profile["latitude"], profile["longitude"]):
+                st.session_state["weather_snapshot"] = None
+                st.session_state.pop("weather_coordinates", None)
             st.session_state["farm_profile"] = {
                 "location": location or "Not specified",
                 "latitude": lat,

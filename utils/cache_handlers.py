@@ -16,11 +16,11 @@ def inject_global_styles() -> None:
     theme = st.session_state.get("active_theme", "dark")
     css = STYLESHEET.read_text(encoding="utf-8")
     colors = (
-        "color-scheme:dark;--app-bg:#071526;--app-bg-2:#0a192f;"
-        "--surface:rgba(15,35,54,.72);--surface-strong:rgba(18,45,64,.9);"
-        "--surface-border:rgba(190,231,220,.13);--text:#e6f1ff;--muted:#9fb3c8;"
-        "--accent:#64ffda;--accent-strong:#10b981;--shadow:rgba(0,0,0,.23);"
-        "--glow-one:rgba(16,185,129,.16);--glow-two:rgba(100,255,218,.06);"
+        "color-scheme:dark;--app-bg:#081e19;--app-bg-2:#103327;"
+        "--surface:rgba(24,63,48,.82);--surface-strong:#1b4435;"
+        "--surface-border:rgba(203,240,209,.23);--text:#f3fff1;--muted:#b8d9c4;"
+        "--accent:#ceef94;--accent-strong:#9addb1;--shadow:rgba(0,0,0,.23);"
+        "--glow-one:rgba(131,175,64,.32);--glow-two:rgba(78,174,133,.18);"
         "--focus-ring:rgba(16,185,129,.28);"
         if theme == "dark"
         else "color-scheme:light;--app-bg:#f8fafc;--app-bg-2:#edf5f0;"

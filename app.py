@@ -8,7 +8,7 @@ from utils.cache_handlers import inject_global_styles
 from utils.state_manager import initialize_state
 
 st.set_page_config(page_title=APP_NAME, page_icon=APP_ICON, layout="wide",
-                   initial_sidebar_state="expanded")
+                   initial_sidebar_state="auto")
 initialize_state()
 
 pages = [

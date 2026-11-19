@@ -125,13 +125,12 @@ section.main {
 
 .block-container {
   max-width: 1440px;
-  padding-top: 1.6rem;
+  padding-top: 3.5rem;
   padding-bottom: 4rem;
 }
 
 #MainMenu,
-footer,
-header {
+footer {
   visibility: hidden;
   height: 0;
 }
@@ -139,6 +138,161 @@ header {
 [data-testid="stHeader"],
 [data-testid="stToolbar"] {
   background: transparent;
+}
+
+.field-heading {
+  display: flex;
+  justify-content: space-between;
+  align-items: end;
+  flex-wrap: wrap;
+  gap: .8rem 1.5rem;
+  padding: .6rem 0 .25rem;
+}
+
+.field-heading p {
+  margin: 0 0 .2rem;
+  color: var(--accent);
+  font-size: .72rem;
+  font-weight: 700;
+  letter-spacing: .16em;
+}
+
+.field-heading h1 {
+  margin: 0;
+  padding: 0;
+  font-size: clamp(2.5rem, 5vw, 4.75rem);
+  line-height: 1;
+  letter-spacing: -.07em;
+}
+
+.field-location, .st-key-field_shortcuts [data-testid="stPageLink"] a {
+  border: 1px solid var(--surface-border);
+  border-radius: 999px;
+  background: var(--surface);
+  color: var(--text);
+  padding: .45rem .8rem;
+  overflow-wrap: anywhere;
+}
+
+.field-overview {
+  display: grid;
+  grid-template-columns: minmax(0, 1.2fr) minmax(0, 1fr);
+  gap: .85rem;
+}
+
+.field-metrics {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: .65rem;
+}
+
+.field-metric, .field-outlook {
+  min-width: 0;
+  padding: clamp(.85rem, 1.8vw, 1.35rem);
+  border: 1px solid #daffe445;
+  border-radius: 24px;
+  color: #f3fff0;
+  box-shadow: inset 0 1px 0 #ffffff16, 0 12px 32px #041c1928;
+}
+
+.field-metric {
+  display: flex;
+  min-height: 172px;
+  flex-direction: column;
+  background: radial-gradient(ellipse at 84% 8%, #84ac3455, transparent 65%), #144b37;
+}
+
+.field-sun {
+  background: radial-gradient(ellipse at 100% 9%, #b3ca6680, transparent 70%),
+    linear-gradient(145deg, #496821, #263f21);
+}
+
+.field-rain {
+  background: radial-gradient(ellipse at 96% 12%, #58ba9a55, transparent 65%), #1b5446;
+}
+
+.field-soil {
+  background: radial-gradient(ellipse at 96% 10%, #83a36344, transparent 70%), #234b36;
+}
+
+.field-icon {
+  display: grid;
+  width: 2.15rem;
+  height: 2.15rem;
+  flex: 0 0 auto;
+  place-items: center;
+  border: 1px solid #dcffdf60;
+  border-radius: 50%;
+  background: #e4fbe02b;
+  color: #f3ffe6;
+  line-height: 1;
+}
+
+.field-metric h2, .field-outlook h2 {
+  margin: 0;
+  padding: 0;
+  color: inherit;
+  font: 600 1rem/1.2 Inter, sans-serif;
+}
+
+.field-metric h2 { margin-top: .65rem; }
+.field-metric p, .field-outlook p {
+  margin: .25rem 0 .5rem;
+  color: #dcf1d8;
+  font-size: .76rem;
+}
+
+.field-metric strong, .field-outlook strong {
+  display: block;
+  margin-top: auto;
+  font: 500 clamp(1.7rem, 3vw, 3rem)/1 "Space Grotesk", sans-serif;
+  letter-spacing: -.06em;
+  font-variant-numeric: tabular-nums;
+}
+
+.field-overview small {
+  margin-left: .2em;
+  font: 500 .75rem Inter, sans-serif;
+  letter-spacing: 0;
+}
+
+.field-outlook {
+  display: flex;
+  flex-direction: column;
+  background: radial-gradient(ellipse at 93% 12%, #89bc4f77, transparent 65%),
+    radial-gradient(ellipse at 8% 88%, #52b58c40, transparent 55%), #123e32;
+}
+
+.field-outlook-head { display: flex; align-items: center; justify-content: space-between; gap: .5rem; }
+.field-outlook strong { margin-top: 1.5rem; font-size: clamp(2.7rem, 6vw, 5.25rem); }
+.field-overview .field-rain-chart {
+  display: grid;
+  grid-auto-columns: minmax(0, 1fr);
+  grid-auto-flow: column;
+  align-items: end;
+  gap: .25rem;
+  margin: auto 0 0;
+  padding: .9rem 0 0;
+  list-style: none;
+  min-height: 126px;
+}
+.field-rain-chart li { display: grid; justify-items: center; gap: .35rem; font-size: .72rem; color: #dfefcf; }
+.field-dots {
+  width: min(100%, 24px);
+  height: var(--dot-height);
+  background: radial-gradient(circle, #e3f5b4 2px, transparent 2.4px) 0 bottom / 8px 8px;
+}
+.field-outlook .field-empty { margin-top: auto; }
+.field-sr { position: absolute; width: 1px; height: 1px; overflow: hidden; clip-path: inset(50%); }
+
+@media (max-width: 1080px) {
+  .field-overview { grid-template-columns: 1fr; }
+  .field-outlook { min-height: 245px; }
+}
+
+@media (max-width: 480px) {
+  .field-metric, .field-outlook { border-radius: 18px; }
+  .field-metric { min-height: 155px; }
 }
 
 [data-testid="stSidebar"] {
@@ -549,7 +703,7 @@ code {
 
 @media (max-width: 640px) {
   .block-container {
-    padding: 1rem .75rem 3rem;
+    padding: 3.2rem .75rem 3rem;
   }
 
   .hero-panel {

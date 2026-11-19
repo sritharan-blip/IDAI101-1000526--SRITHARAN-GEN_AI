@@ -1,6 +1,5 @@
 from __future__ import annotations
 
-import json
 from datetime import date
 from html import escape
 
@@ -8,10 +7,7 @@ import folium
 import plotly.graph_objects as go
 import streamlit as st
 from streamlit_folium import st_folium
-from streamlit_lottie import st_lottie
 
-from components.metrics_cards import render_metric
-from config.settings import ASSET_DIR
 from services.weather_api import get_weather
 
 
@@ -43,7 +39,7 @@ def _forecast_chart(weather: dict) -> go.Figure:
             date_labels.append(date.fromisoformat(str(value)[:10]).strftime("%b %d"))
         except ValueError:
             date_labels.append(str(value))
-    max_rainfall = max(rainfall, default=0) if rainfall else 0
+    max_rainfall = max((value for value in rainfall if value is not None), default=0)
     fig = go.Figure()
     fig.add_trace(go.Bar(x=dates, y=rainfall, name="Rainfall", marker_color="#10b981", opacity=.78))
     fig.add_trace(go.Scatter(x=dates, y=highs, name="High °C", yaxis="y2",
@@ -65,89 +61,106 @@ def _forecast_chart(weather: dict) -> go.Figure:
     return fig
 
 
-st.markdown(
-    '<section class="hero-panel"><div class="eyebrow">Precision agriculture · command center</div>'
-    '<h1>Your farm, in focus.</h1><p>Local weather, clear context, and practical next steps — '
-    'all in one calm workspace.</p></section>',
-    unsafe_allow_html=True,
-)
+def _reading(value, unit: str, decimals: int = 0) -> str:
+    return f"{value:.{decimals}f}<small>{unit}</small>" if isinstance(value, (float, int)) else "—"
+
+
+def _metric(label: str, value: str, detail: str, icon: str, tone: str) -> str:
+    return (
+        f'<article class="field-metric {tone}"><span class="field-icon" aria-hidden="true">{icon}</span>'
+        f'<h2>{label}</h2><p>{detail}</p><strong>{value}</strong></article>'
+    )
+
+
+def _rain_dots(dates: list, rainfall: list) -> str:
+    days = list(zip(dates, rainfall))
+    if not any(isinstance(value, (int, float)) for _, value in days):
+        return '<p class="field-empty">Daily rainfall appears when a forecast is available.</p>'
+    peak = max((value for _, value in days if isinstance(value, (int, float))), default=0)
+    columns = []
+    for day, value in days:
+        label = date.fromisoformat(day).strftime("%a")
+        amount = f"{value:g} mm" if isinstance(value, (int, float)) else "unavailable"
+        dots = round(12 * value / peak) if peak and isinstance(value, (int, float)) else 0
+        columns.append(
+            f'<li title="{label}: {amount}"><span class="field-dots" aria-hidden="true" '
+            f'style="--dot-height:{dots * 8}px"></span><span>{label}</span>'
+            f'<span class="field-sr">: {amount}</span></li>'
+        )
+    return '<ul class="field-rain-chart" aria-label="Daily rainfall">' + "".join(columns) + "</ul>"
+
 
 profile = st.session_state["farm_profile"]
 latitude, longitude = profile["latitude"], profile["longitude"]
-weather = None
+coordinates = (latitude, longitude)
+location = escape(profile.get("location") or "Farm pin")
+st.html(
+    f'<section class="field-heading"><div><p>AGRONOVA / COMMAND CENTER</p>'
+    f'<h1>Farm overview</h1></div><span class="field-location">⌖ &nbsp; {location}</span></section>'
+)
+
+with st.container(horizontal=True, key="field_shortcuts"):
+    st.page_link("components/ai_chat.py", label="Ask Novi", icon=":material/forum:")
+    st.page_link("components/vision_scanner.py", label="Scan a crop", icon=":material/psychiatry:")
+    st.page_link("components/yield_simulator.py", label="Yield & finance", icon=":material/monitoring:")
+    st.page_link("components/legacy_workflows.py", label="Advisor", icon=":material/agriculture:")
+
 with st.spinner("Refreshing local forecast…"):
     try:
-        weather = get_weather(latitude, longitude)
+        weather = get_weather(*coordinates)
         st.session_state["weather_snapshot"] = weather
-    except Exception as exc:
-        st.error(f"Could not load live weather from Open-Meteo: {str(exc)[:220]}", icon="🌦️")
+        st.session_state["weather_coordinates"] = coordinates
+        weather_status = "Open-Meteo forecast"
+    except Exception:
+        weather = (st.session_state.get("weather_snapshot")
+                   if st.session_state.get("weather_coordinates") == coordinates else None)
+        weather_status = "Last available forecast" if weather else "Weather feed unavailable"
 
-col1, col2 = st.columns(2, gap="medium")
-current = weather.get("current", {}) if weather else {}
-with col1:
-    if weather:
-        render_metric("Temperature", f"{current.get('temperature_2m', '—')}°C",
-                      "Current local observation · Open-Meteo", "🌡️")
-    else:
-        render_metric("Weather", "Unavailable", "Check coordinates or try again later", "🌦️")
-with col2:
-    if weather:
-        render_metric("Humidity", f"{current.get('relative_humidity_2m', '—')}%",
-                      f"Wind {current.get('wind_speed_10m', '—')} km/h", "💧")
-    else:
-        render_metric("Humidity", "Unavailable", "Waiting for a weather snapshot", "💧")
+current = (weather or {}).get("current", {})
+daily = (weather or {}).get("daily", {})
+rainfall = daily.get("precipitation_sum") or []
+known_rainfall = [value for value in rainfall if isinstance(value, (int, float))]
+rain_total = sum(known_rainfall) if known_rainfall else None
+soil_series = (weather or {}).get("hourly", {}).get("soil_moisture_0_to_1cm") or []
+soil_moisture = next((value for value in soil_series if value is not None), None)
+wind = current.get("wind_speed_10m")
+weather_code = current.get("weather_code")
+conditions = _weather_description(weather_code) if weather_code is not None else "Current conditions unavailable"
 
-animation_column = st.columns([1, 2, 1], gap="medium")[1]
-with animation_column:
-    animation_path = ASSET_DIR / "farm_lottie.json"
-    try:
-        with animation_path.open(encoding="utf-8") as file:
-            st_lottie(json.load(file), height=130, key="farm_animation",
-                      loop=True, quality="low")
-    except (OSError, json.JSONDecodeError):
-        st.markdown('<div class="glass-card" style="padding:1rem;text-align:center">'
-                    '🌿 &nbsp; Growing a clearer picture of your farm</div>',
-                    unsafe_allow_html=True)
+cards = [
+    _metric("Air temperature", _reading(current.get("temperature_2m"), "°C"), conditions, "☼", "field-sun"),
+    _metric("Humidity", _reading(current.get("relative_humidity_2m"), "%"),
+            f"Wind {wind:g} km/h" if isinstance(wind, (int, float)) else "Current relative humidity", "≈", "field-leaf"),
+    _metric("Rain now", _reading(current.get("precipitation"), "mm", 1), "Current precipitation", "⋮", "field-rain"),
+    _metric("Surface soil moisture", _reading(soil_moisture, "m³/m³", 2),
+            "Open-Meteo model estimate", "⌑", "field-soil"),
+]
+st.html(
+    '<section class="field-overview" aria-label="Farm weather">'
+    '<div class="field-metrics">' + "".join(cards) + '</div>'
+    '<article class="field-outlook"><div class="field-outlook-head"><h2>Seven-day rainfall</h2>'
+    '<span class="field-icon" aria-hidden="true">↗</span></div>'
+    f'<strong>{_reading(rain_total, "mm", 1)}</strong><p>{weather_status}</p>'
+    f'{_rain_dots(daily.get("time") or [], rainfall)}</article></section>'
+)
 
-left, right = st.columns([1.45, 1], gap="large")
-with left:
+left, right = st.columns([1.3, 1], gap="medium")
+with left, st.container(border=True, key="field_forecast"):
+    st.subheader("Temperature & rain")
     if weather:
-        st.subheader("Seven-day outlook")
-        st.caption("Forecast for the coordinates saved in your farm profile.")
         st.plotly_chart(_forecast_chart(weather), width="stretch", config={"displayModeBar": False})
     else:
-        st.info("A live forecast will appear here when the weather service is reachable.")
-with right:
+        st.info("The forecast will appear here when Open-Meteo is reachable.")
+with right, st.container(border=True, key="field_map"):
     st.subheader("Farm location")
-    st.caption(profile.get("location") or "Farm pin · edit in the sidebar")
+    st.caption(profile.get("location") or "Edit coordinates in the sidebar")
     map_view = folium.Map(
         location=[latitude, longitude], zoom_start=7,
         tiles="OpenStreetMap", control_scale=True,
     )
     folium.Marker(
-        [latitude, longitude],
-        tooltip=escape(profile.get("location") or "Your farm"),
+        [latitude, longitude], tooltip=location,
         popup=escape(f"Farm · {latitude:.4f}, {longitude:.4f}"),
         icon=folium.Icon(color="green", icon="leaf", prefix="fa"),
     ).add_to(map_view)
-    st_folium(map_view, height=330, width=None, returned_objects=[])
-    st.caption("OpenStreetMap tiles are fetched for the displayed area.")
-
-if weather:
-    soil_moisture = (weather.get("hourly", {}).get("soil_moisture_0_to_1cm") or [None])[0]
-    micro1, micro2, micro3 = st.columns(3)
-    with micro1:
-        render_metric("Rain now", f"{current.get('precipitation', '—')} mm",
-                      "Current precipitation", "🌧️")
-    with micro2:
-        value = f"{soil_moisture:.2f} m³/m³" if isinstance(soil_moisture, (int, float)) else "Unavailable"
-        render_metric("Surface soil moisture", value,
-                      "Open-Meteo model estimate · not a field sensor", "🪴")
-    with micro3:
-        daily_total = sum(weather.get("daily", {}).get("precipitation_sum", []) or [])
-        render_metric("Forecast rain", f"{daily_total:.1f} mm",
-                      "Total over the next seven days", "☔")
-    st.caption(
-        f"Current weather: {_weather_description(int(current.get('weather_code', -1)))}. "
-        "Satellite imagery and NDVI are not connected; no vegetation index is inferred."
-    )
+    st_folium(map_view, height=270, width=None, returned_objects=[])
