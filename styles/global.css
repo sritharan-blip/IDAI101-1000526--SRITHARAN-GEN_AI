@@ -140,6 +140,16 @@ footer {
   background: transparent;
 }
 
+[data-testid="stHeader"] button,
+[data-testid="stSidebarCollapseButton"] button,
+[data-testid="stExpandSidebarButton"] {
+  color: var(--text);
+}
+
+[data-testid="stToolbarActionButtonIcon"] {
+  filter: var(--toolbar-icon-filter, none);
+}
+
 .field-heading {
   display: flex;
   justify-content: space-between;
@@ -468,13 +478,9 @@ a {
   background: color-mix(in srgb, var(--accent-strong) 15%, transparent);
 }
 
-.st-key-yield_totals [data-testid="stMetric"] {
+.st-key-yield_totals [data-testid="stVerticalBlockBorderWrapper"] {
   height: 100%;
   background: radial-gradient(ellipse at 100% 0%, #90ae4732, transparent 78%), var(--surface);
-}
-
-.st-key-yield_totals [data-testid="stMetricDelta"] svg {
-  display: none;
 }
 
 .summary {
@@ -524,7 +530,6 @@ a {
 }
 
 .glass-card,
-[data-testid="stMetric"],
 [data-testid="stExpander"],
 [data-testid="stChatMessage"],
 [data-testid="stVerticalBlockBorderWrapper"] {
@@ -556,8 +561,7 @@ a {
     box-shadow .24s ease;
 }
 
-.metric-card:hover,
-[data-testid="stMetric"]:hover {
+.metric-card:hover {
   transform: translateY(-3px);
   box-shadow: 0 18px 48px var(--shadow);
 }
@@ -669,7 +673,12 @@ textarea::placeholder {
 
 [data-testid="stButton"] button,
 [data-testid="stDownloadButton"] button,
-[data-testid="stPopover"] button {
+[data-testid="stPopover"] button,
+[data-testid="stFormSubmitButton"] button,
+[data-testid="stFileUploaderDropzone"] button,
+[data-testid="stNumberInputStepUp"],
+[data-testid="stNumberInputStepDown"],
+[data-testid="stChatInputSubmitButton"] {
   border: 1px solid var(--surface-border);
   border-radius: 12px;
   background-color: var(--surface-strong);
@@ -698,11 +707,51 @@ textarea::placeholder {
 [data-testid="stBaseButton-primary"] {
   border-color: var(--accent-strong) !important;
   background-color: var(--accent-strong) !important;
-  color: var(--app-bg) !important;
+  color: var(--primary-ink) !important;
 }
 
 [data-testid="stBaseButton-primary"] * {
-  color: var(--app-bg) !important;
+  color: var(--primary-ink) !important;
+}
+
+[data-testid="stBaseButton-primary"]:disabled {
+  opacity: .56;
+}
+
+[data-testid="stFileUploaderDropzone"],
+[data-testid="stFileUploaderDropzone"] small,
+[data-testid="stMetricLabel"],
+[data-testid="stMetricValue"],
+[data-testid="stMetricValue"] * {
+  color: var(--text);
+}
+
+[data-testid="stFileUploaderDropzone"],
+[data-testid="stChatInput"] [data-baseweb="textarea"] {
+  background: var(--surface-strong);
+}
+
+[data-testid="stChatInput"] textarea {
+  color: var(--text);
+}
+
+[data-testid="stCheckbox"] label:has(input[role="switch"]) > span + div {
+  background: var(--switch-off);
+}
+
+[data-testid="stCheckbox"] label:has(input[role="switch"]:checked) > span + div {
+  background: var(--accent-strong);
+}
+
+[data-testid="stCheckbox"] label:has(input[role="switch"]) > span + div > div {
+  background: #fff;
+  box-shadow: 0 0 0 1px #102b24;
+}
+
+[data-testid="stCheckbox"] label:has(input[role="switch"]:focus-visible) > span + div,
+[data-testid="stAppViewContainer"] button:focus-visible {
+  outline: 2px solid var(--focus-ring);
+  outline-offset: 2px;
 }
 
 [data-testid="stTabs"] [data-baseweb="tab-list"] {

@@ -148,7 +148,7 @@ left, right = st.columns([1.3, 1], gap="medium")
 with left, st.container(border=True, key="field_forecast"):
     st.subheader("Temperature & rain")
     if weather:
-        st.plotly_chart(_forecast_chart(weather), width="stretch", config={"displayModeBar": False})
+        st.plotly_chart(_forecast_chart(weather), theme=None, width="stretch", config={"displayModeBar": False})
     else:
         st.info("The forecast will appear here when Open-Meteo is reachable.")
 with right, st.container(border=True, key="field_map"):

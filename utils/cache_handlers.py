@@ -21,13 +21,13 @@ def inject_global_styles() -> None:
         "--surface-border:rgba(203,240,209,.23);--text:#f3fff1;--muted:#b8d9c4;"
         "--accent:#ceef94;--accent-strong:#9addb1;--shadow:rgba(0,0,0,.23);"
         "--glow-one:rgba(131,175,64,.32);--glow-two:rgba(78,174,133,.18);"
-        "--focus-ring:rgba(16,185,129,.28);"
+        "--focus-ring:#9addb1;--primary-ink:#081e19;--switch-off:#426c59;"
         if theme == "dark"
         else "color-scheme:light;--app-bg:#f8fafc;--app-bg-2:#edf5f0;"
         "--surface:#ffffff;--surface-strong:#f1f6f3;"
         "--surface-border:rgba(25,65,48,.16);--text:#172b24;--muted:#52665e;"
         "--accent:#047857;--accent-strong:#047857;--shadow:rgba(20,45,35,.09);"
         "--glow-one:rgba(16,185,129,.10);--glow-two:rgba(14,116,94,.05);"
-        "--focus-ring:rgba(4,120,87,.2);"
+        "--focus-ring:#047857;--primary-ink:#fff;--switch-off:#647e72;--toolbar-icon-filter:brightness(.18);"
     )
     st.markdown(f"<style>{css}\n:root{{{colors}}}</style>", unsafe_allow_html=True)

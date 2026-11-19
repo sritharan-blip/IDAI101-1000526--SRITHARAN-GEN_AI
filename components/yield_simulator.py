@@ -30,8 +30,11 @@ def render_simulator() -> None:
                                        min_value=0.0, value=220.0, step=10.0, key="sim_market_price")
         price_change = st.slider("Illustrative price movement over 6 months (%)", -30, 50, 5,
                                  key="sim_price_change")
-        farm_size = float(profile.get("size_ha", 0))
-        st.caption(f"Farm area: {farm_size:g} ha · change it in the sidebar.")
+        farm_size = st.number_input(
+            "Area in this scenario (ha)", min_value=0.0, max_value=100000.0,
+            value=float(profile.get("size_ha", 0)), step=0.5, key="sim_area",
+            help="Defaults to your farm profile. Leave it at zero to compare results per hectare.",
+        )
 
     result = estimate_yield(
         farm_size,
@@ -44,6 +47,8 @@ def render_simulator() -> None:
     price_trend = [
         market_price * (1 + price_change * step / 600) for step in range(7)
     ]
+    final_price = price_trend[-1]
+    gross_revenue = result["total_yield"] * final_price
     with chart_col, st.container(border=True, key="yield_chart"):
         st.subheader("Yield and price scenario")
         figure = go.Figure()
@@ -57,38 +62,41 @@ def render_simulator() -> None:
         ))
         text_color = "#e6f1ff" if st.session_state.get("active_theme") == "dark" else "#0f172a"
         figure.update_layout(
-            height=390, margin={"l": 10, "r": 10, "t": 28, "b": 10},
+            height=390, margin={"l": 12, "r": 12, "t": 62, "b": 18},
             paper_bgcolor="rgba(0,0,0,0)", plot_bgcolor="rgba(0,0,0,0)",
-            font={"color": text_color}, legend={"orientation": "h", "y": 1.14},
-            xaxis={"gridcolor": "rgba(160,180,190,.12)"},
+            font={"color": text_color}, legend={"orientation": "h", "y": 1.04},
+            xaxis={"automargin": True, "showgrid": False},
             yaxis={"title": "Yield (tonnes/ha)",
                    "range": [0, max(1, result["yield_per_ha"] * 1.25)],
-                   "gridcolor": "rgba(160,180,190,.12)"},
-            yaxis2={"title": f"Price ({currency}/tonne)", "overlaying": "y", "side": "right"},
+                   "automargin": True, "gridcolor": "rgba(108,137,123,.28)"},
+            yaxis2={"title": f"Price ({currency}/tonne)", "overlaying": "y", "side": "right",
+                    "automargin": True, "showgrid": False},
         )
-        st.plotly_chart(figure, width="stretch", config={"displayModeBar": False})
+        st.plotly_chart(figure, theme=None, width="stretch", config={"displayModeBar": False})
 
     metric1, metric2, metric3 = totals.columns(3)
-    with metric1:
-        yield_value = f"{result['total_yield']:.2f} t" if farm_size else "—"
-        st.metric("Total scenario yield", yield_value,
-                  f"{result['yield_per_ha']:.2f} t/ha", delta_color="off")
-    with metric2:
-        revenue = f"{currency} {result['total_yield'] * market_price:,.0f}" if farm_size else "—"
-        st.metric("Illustrative gross revenue", revenue,
-                  "Before costs, losses, and transport", delta_color="off")
-    with metric3:
-        total_investment = f"{currency} {investment * farm_size:,.0f}" if farm_size else "—"
-        st.metric("Fertilizer investment", total_investment,
-                  "Scenario input only", delta_color="off")
+    with metric1, st.container(border=True):
+        yield_value = f"{result['total_yield']:.2f} t" if farm_size else f"{result['yield_per_ha']:.2f} t/ha"
+        st.metric("Scenario yield", yield_value)
+        if farm_size:
+            st.caption(f"{result['yield_per_ha']:.2f} t/ha")
+    with metric2, st.container(border=True):
+        revenue = gross_revenue if farm_size else result["yield_per_ha"] * final_price
+        st.metric("Gross revenue at month 6", f"{currency} {revenue:,.0f}" + ("" if farm_size else "/ha"))
+        st.caption("Before costs, losses, and transport")
+    with metric3, st.container(border=True):
+        total_investment = investment * farm_size if farm_size else investment
+        st.metric("Fertilizer investment", f"{currency} {total_investment:,.0f}" + ("" if farm_size else "/ha"))
+        st.caption("Scenario input")
     st.session_state["yield_simulation"] = {
         **result,
         "rainfall_mm": rainfall,
         "fertilizer_per_ha": investment,
         "market_price_per_tonne": market_price,
+        "projected_price_per_tonne": final_price,
         "currency": currency,
         "farm_size_ha": farm_size,
-        "gross_revenue": result["total_yield"] * market_price,
+        "gross_revenue": gross_revenue,
     }
 
 

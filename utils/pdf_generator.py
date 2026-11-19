@@ -49,9 +49,15 @@ def generate_farm_report(state: dict) -> bytes:
     _section(pdf, "Yield scenario")
     if simulation:
         _line(pdf, f"Crop: {simulation.get('crop', 'Unspecified crop')}")
-        _line(pdf, f"Illustrative yield: {simulation.get('total_yield', 0):.2f} tonnes")
-        _line(pdf, f"Assumed gross revenue: {simulation.get('currency', 'USD')} "
-                   f"{simulation.get('gross_revenue', 0):,.2f}")
+        per_hectare = not simulation.get("farm_size_ha")
+        price = simulation.get("projected_price_per_tonne", simulation.get("market_price_per_tonne", 0))
+        yield_per_ha = simulation.get("yield_per_ha", 0)
+        yield_value = yield_per_ha if per_hectare else simulation.get("total_yield", 0)
+        revenue = yield_per_ha * price if per_hectare else simulation.get("gross_revenue", 0)
+        unit = "/ha" if per_hectare else ""
+        revenue_label = "Gross revenue at month 6" if "projected_price_per_tonne" in simulation else "Gross revenue"
+        _line(pdf, f"Illustrative yield: {yield_value:.2f} tonnes{unit}")
+        _line(pdf, f"{revenue_label}: {simulation.get('currency', 'USD')} {revenue:,.2f}{unit}")
         _line(pdf, "Scenario only; not a validated yield or price forecast.")
     else:
         _line(pdf, "No yield scenario has been saved yet.")
