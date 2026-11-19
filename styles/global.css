@@ -359,6 +359,10 @@ legend {
   color: var(--muted);
 }
 
+[data-testid="stCaptionContainer"] {
+  opacity: 1;
+}
+
 h1,
 h2,
 h3,

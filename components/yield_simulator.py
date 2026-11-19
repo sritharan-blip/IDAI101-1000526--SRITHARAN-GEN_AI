@@ -78,8 +78,7 @@ def render_simulator() -> None:
     with metric1, st.container(border=True):
         yield_value = f"{result['total_yield']:.2f} t" if farm_size else f"{result['yield_per_ha']:.2f} t/ha"
         st.metric("Scenario yield", yield_value)
-        if farm_size:
-            st.caption(f"{result['yield_per_ha']:.2f} t/ha")
+        st.caption(f"{result['yield_per_ha']:.2f} t/ha" if farm_size else "Add an area to see total yield")
     with metric2, st.container(border=True):
         revenue = gross_revenue if farm_size else result["yield_per_ha"] * final_price
         st.metric("Gross revenue at month 6", f"{currency} {revenue:,.0f}" + ("" if farm_size else "/ha"))
