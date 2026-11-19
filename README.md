@@ -1,14 +1,14 @@
 # 🌱 AgroNova – Farm Intelligence
 
+![AgroNova animated banner with sunrise and a sprout](assets/agronova-banner.svg)
+
+[Quick start](#run-locally) · [Features](#features) · [Validation Lab](#step-5--model-validation--optimisation) · [Deployment guide](DEPLOY.md)
+
 > AgroNova pilot · Generative AI · Formative Assessment 2 (Web App Building, API Integration, Deployment)
 
 A modular Streamlit farming assistant powered by Google's current `google-genai` SDK. Its command center combines
 farm-profile-aware chat, crop-image triage, a live weather forecast, a map, and an explicitly illustrative yield
 scenario. The original Advisor, Validation Lab, and Insights workflows remain available as a separate page.
-
-**🔗 Live app:** `PASTE-YOUR-STREAMLIT-URL-HERE`  ·  **📦 Repo:** `PASTE-YOUR-GITHUB-URL-HERE`
-
-![Home](docs/01_home.png)
 
 ## Features
 
@@ -31,9 +31,9 @@ The sidebar groups appearance and language, farm details, Gemini settings, and t
 
 ### Gemini model options
 
-- `gemini-4-argon` – newest flagship reasoning model and the default.
+- `gemini-3.5-flash-lite` is the default for text and crop images when the key supports it.
 - `gemini-3.8-flash` and `gemini-3.6-flash` – faster general-purpose choices.
-- `gemini-3.5-flash-lite` and `gemini-3.1-flash-lite` – cost-efficient choices.
+- `gemini-3.1-flash-lite` is another cost-efficient option.
 - With a Gemini API key, the picker also lists models available to that key. A custom model ID can be entered when needed.
 
 ## Architecture
@@ -50,8 +50,6 @@ knowledge/                 Reviewable local safety notes used by retrieval
 assets/                    Bundled farm animation
 Dockerfile                 Multi-stage, non-root container image
 ```
-
-![Advice](docs/02_advice.png)
 
 ## Step 4 – Output formatting & reasoning
 Example (input: *"What to grow in Rajasthan in August?"*):
@@ -90,40 +88,27 @@ Example (input: *"What to grow in Rajasthan in August?"*):
 | Too random (temperature 1.0) | Temperature 0.4, JSON mime type |
 | Model retired | Live model discovery for the API key, plus fallback across available Gemini models |
 
-> 📝 **Add your real results here:** open the *Validation Lab* with your API key, press **Run validation**, download
-> the **validation report (.md)** and paste it below. (Screenshots in `docs/` were captured in *demo mode*, where
-> responses are built-in samples, so don't quote those scores as Gemini results.)
-
-![Validation](docs/03_validation.png)
+Open **Advisor & insights → Validation Lab** with a Gemini key and select **Run validation** to compare the prompts and export a report. Demo mode uses built-in samples.
 
 ## Step 6 – Deployment
 - `app.py` – app router · `requirements.txt` – Streamlit, Gemini, LangChain, Plotly, Folium, PDF and analytics dependencies
-- Hosted on Streamlit Community Cloud from this GitHub repo; API key stored in **Secrets** (never in code).
-- The app uses Google's `google-genai` SDK, defaults to Gemini 4 Argon, and offers newer Flash and cost-efficient Flash-Lite options. With an API key, the picker lists models enabled for that key. Add the key as `GEMINI_API_KEY`.
-- **Cross-device testing:** record results below.
-
-| Device / browser | Result |
-|---|---|
-| Laptop – Chrome | ✅ / ❌ |
-| Android phone – Chrome | |
-| iPhone – Safari | |
-| Tablet | |
-
-![Mobile](docs/05_mobile.png)  ![Insights](docs/04_insights.png)
+- For Streamlit Community Cloud, select `app.py` as the entry point and set `GEMINI_API_KEY` in the app's Secrets. See the [deployment guide](DEPLOY.md).
 
 ## Run locally
 ```bash
-pip install -r requirements.txt
-streamlit run app.py
+python -m pip install -r requirements.txt
+python -m streamlit run app.py
 ```
 
-Set `GEMINI_API_KEY` in the environment or configure Streamlit Secrets (`.streamlit/secrets.toml` locally; never commit it). Choose an AI response language in the sidebar; the setting applies to chat, crop scans, and the Advisor. The app interface itself remains in English. The original Advisor page supports demo mode without a key; live chat and image analysis require one.
+Get a Gemini key from [Google AI Studio](https://aistudio.google.com/apikey). For local use, copy [the secrets example](.streamlit/secrets.toml.example) to `.streamlit/secrets.toml` and fill in `GEMINI_API_KEY`, or set the environment variable of the same name. Keep the real key out of Git. If the server has no key, enter one in the sidebar under **Gemini connection** for the current session.
+
+The same connection powers chat, crop scans, and Advisor & insights. The sidebar also controls the language of AI responses. To explore the app before configuring a key, open **Advisor & insights** and use **Demo mode**.
 
 ### Docker
 
 ```bash
 docker build -t agronova .
-docker run --rm -p 8501:8501 -e GEMINI_API_KEY="your-key" agronova
+docker run --rm -p 8501:8501 -e GEMINI_API_KEY agronova
 ```
 
 ### Data and limitations

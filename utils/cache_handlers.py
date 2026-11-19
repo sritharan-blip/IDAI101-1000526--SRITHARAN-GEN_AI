@@ -5,11 +5,11 @@ import streamlit as st
 from config.settings import STYLESHEET
 
 
-@st.cache_resource(show_spinner=False)
+@st.cache_resource(show_spinner=False, max_entries=32, ttl=900)
 def get_gemini_client(api_key: str):
     from google import genai
 
-    return genai.Client(api_key=api_key)
+    return genai.Client(api_key=api_key, vertexai=False)
 
 
 def inject_global_styles() -> None:

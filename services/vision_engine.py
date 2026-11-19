@@ -38,7 +38,7 @@ def analyze_crop_image(
                 config=types.GenerateContentConfig(
                     response_mime_type="application/json",
                     temperature=0.1,
-                    max_output_tokens=900,
+                    max_output_tokens=4096,
                 ),
             )
             result = json.loads(response.text or "")
@@ -50,16 +50,16 @@ def analyze_crop_image(
                 "confidence": confidence,
                 "treatment_organic": _clean_list(result.get("treatment_organic")),
                 "treatment_chemical": _clean_list(result.get("treatment_chemical")),
-                "quarantine_required": bool(result.get("quarantine_required", False)),
+                "quarantine_required": result.get("quarantine_required") is True,
                 "model": candidate,
             }
         except Exception as exc:
             last_error = exc
             if isinstance(exc, ValueError):
-                raise RuntimeError(f"Could not parse Gemini's crop scan response: {exc}") from exc
+                raise RuntimeError("Gemini returned an unreadable crop scan.") from exc
             if not is_model_unavailable_error(exc):
                 raise
-    raise RuntimeError(f"No available Gemini vision model completed the scan: {last_error}")
+    raise last_error
 
 
 def _clean_list(value: object) -> list[str]:

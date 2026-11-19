@@ -4,12 +4,13 @@ import re
 from collections.abc import Iterator
 
 import streamlit as st
+from google.genai.errors import APIError
 
 from config.settings import DEFAULT_MODEL, MODEL_FALLBACKS
 from utils.cache_handlers import get_gemini_client
 
 
-@st.cache_data(ttl=900, show_spinner=False)
+@st.cache_data(ttl=900, show_spinner=False, max_entries=32)
 def list_models(api_key: str) -> list[str]:
     client = get_gemini_client(api_key)
     models = client.models.list(config={"page_size": 100})
@@ -17,7 +18,8 @@ def list_models(api_key: str) -> list[str]:
     for model in models:
         name = (getattr(model, "name", "") or "").rsplit("/", 1)[-1]
         actions = getattr(model, "supported_actions", None) or []
-        if name.startswith("gemini-") and "generateContent" in actions:
+        if (name.startswith("gemini-") and "generateContent" in actions
+                and not any(part in name for part in ("-image", "-tts", "-live", "-robotics", "-computer-use"))):
             names.append(name)
     return sorted(set(names), key=_model_sort_key)
 
@@ -39,13 +41,35 @@ def get_model_candidates(api_key: str, preferred: str) -> list[str]:
         available = list_models(api_key)
     except Exception:
         available = []
-    candidates = [preferred, *available, *MODEL_FALLBACKS]
+    candidates = [preferred, *MODEL_FALLBACKS, *available]
+    if available:
+        candidates = [name for name in candidates if name == preferred or name in available]
     return list(dict.fromkeys(candidates))
 
 
 def is_model_unavailable_error(error: Exception) -> bool:
+    if not isinstance(error, APIError):
+        return False
     message = str(error).lower()
-    return any(term in message for term in ("not found", "404", "not supported", "deprecated", "no longer"))
+    return error.code == 404 or (
+        error.code == 400 and "model" in message
+        and any(term in message for term in ("not supported", "deprecated", "no longer"))
+    )
+
+
+def gemini_error_message(error: Exception | None) -> str:
+    """Describe common Gemini failures without displaying raw provider data."""
+    if isinstance(error, APIError):
+        details = str(error).lower()
+        if error.code in (401, 403) or "api_key_invalid" in details or "api key not valid" in details:
+            return "Gemini rejected the API key or its permissions. Check Gemini connection or the deployment secret."
+        if error.code == 429:
+            return "Gemini is over its rate or quota limit. Check the project quota or try again later."
+        if is_model_unavailable_error(error):
+            return "Gemini could not use the selected model. Choose another model under Gemini connection."
+        if isinstance(error.code, int) and error.code >= 500:
+            return "Gemini is temporarily unavailable. Try again in a moment."
+    return "Gemini could not complete the request. Check the connection and try again."
 
 
 def generate_text(prompt: str, api_key: str, model: str, temperature: float = 0.35,
@@ -61,14 +85,13 @@ def generate_text(prompt: str, api_key: str, model: str, temperature: float = 0.
             )
             text = (response.text or "").strip()
             if text:
-                st.session_state["selected_gemini_model"] = candidate
                 return text
             raise RuntimeError("Gemini returned an empty response.")
         except Exception as exc:
             last_error = exc
             if not is_model_unavailable_error(exc):
                 raise
-    raise RuntimeError(f"No available Gemini model completed the request: {last_error}")
+    raise last_error
 
 
 def stream_chat(prompt: str, history: list[dict], api_key: str, model: str) -> Iterator[str]:
@@ -83,19 +106,20 @@ def stream_chat(prompt: str, history: list[dict], api_key: str, model: str) -> I
 
     last_error: Exception | None = None
     for candidate in get_model_candidates(api_key, model):
+        started = False
         try:
             stream = client.models.generate_content_stream(
                 model=candidate,
                 contents=contents,
-                config={"temperature": 0.4, "max_output_tokens": 1200},
+                config={"temperature": 0.4, "max_output_tokens": 4096},
             )
-            st.session_state["selected_gemini_model"] = candidate
             for chunk in stream:
                 if chunk.text:
+                    started = True
                     yield chunk.text
             return
         except Exception as exc:
             last_error = exc
-            if not is_model_unavailable_error(exc):
+            if started or not is_model_unavailable_error(exc):
                 raise
-    raise RuntimeError(f"No available Gemini model completed the request: {last_error}")
+    raise last_error

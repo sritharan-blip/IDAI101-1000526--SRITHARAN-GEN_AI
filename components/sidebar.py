@@ -5,8 +5,8 @@ import hashlib
 import streamlit as st
 
 from config.languages import RESPONSE_LANGUAGES, format_language_option
-from config.settings import MODEL_DESCRIPTIONS, MODEL_FALLBACKS, get_api_key, has_secret_api_key
-from services.llm_engine import list_models
+from config.settings import MODEL_DESCRIPTIONS, MODEL_FALLBACKS, configured_api_key, get_api_key
+from services.llm_engine import gemini_error_message, list_models
 from utils.pdf_generator import generate_farm_report
 
 
@@ -62,7 +62,7 @@ def render_sidebar() -> None:
 
         with st.expander("Gemini connection", expanded=False, icon=":material/auto_awesome:"):
             api_key = get_api_key()
-            if not has_secret_api_key():
+            if not configured_api_key():
                 st.text_input(
                     "Gemini API key",
                     type="password",
@@ -77,11 +77,13 @@ def render_sidebar() -> None:
                 try:
                     available = list_models(api_key)
                     if available:
-                        model_options = available
+                        model_options = list(dict.fromkeys(
+                            [model for model in MODEL_FALLBACKS if model in available] + available
+                        ))
                     else:
                         st.warning("No text-generation models were returned for this key.")
-                except Exception:
-                    st.warning("Could not load Gemini models. You can still enter a model name below.")
+                except Exception as exc:
+                    st.warning(gemini_error_message(exc))
             catalog_key = hashlib.sha256(api_key.encode()).hexdigest() if api_key else ""
             if st.session_state.get("model_catalog_key") != catalog_key:
                 st.session_state["selected_gemini_model"] = model_options[0]
@@ -92,7 +94,7 @@ def render_sidebar() -> None:
                 "Gemini model",
                 model_options,
                 key="selected_gemini_model",
-                help="The newest model is selected by default. Choose a faster or lower-cost option if preferred.",
+                help="The app prefers Flash-Lite when your key supports it.",
             )
             description = MODEL_DESCRIPTIONS.get(st.session_state["selected_gemini_model"])
             if description:

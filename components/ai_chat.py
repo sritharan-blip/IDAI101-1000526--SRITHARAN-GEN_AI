@@ -5,7 +5,7 @@ import streamlit as st
 from config.prompts import format_chat_prompt
 from config.settings import get_api_key, get_model
 from services.knowledge_base import retrieve_context
-from services.llm_engine import stream_chat
+from services.llm_engine import gemini_error_message, stream_chat
 from utils.state_manager import reserve_ai_request
 
 st.markdown(
@@ -20,11 +20,9 @@ for message in history:
     with st.chat_message(message["role"], avatar=avatar):
         st.markdown(message["content"])
 
-if "queued_question" in st.session_state:
-    st.session_state["chat_input"] = st.session_state.pop("queued_question")
-
 api_key = get_api_key()
-question = st.chat_input("Ask about crops, soil, irrigation, or pests…", key="chat_input")
+typed_question = st.chat_input("Ask about crops, soil, irrigation, or pests…", key="chat_input")
+question = st.session_state.pop("queued_question", None) or typed_question
 if question:
     history.append({"role": "user", "content": question})
     with st.chat_message("user", avatar="🧑‍🌾"):
@@ -57,7 +55,7 @@ if question:
                 else:
                     st.error("Gemini returned no response. Please try again.")
             except Exception as exc:
-                st.error(f"Gemini could not complete the request: {str(exc)[:260]}")
+                st.error(gemini_error_message(exc))
 
 if history and history[-1].get("role") == "assistant":
     st.caption("Quick follow-ups")
