@@ -6,24 +6,28 @@ from io import BytesIO
 import streamlit as st
 from PIL import Image
 
+from components.page_header import render_page_header
 from config.settings import get_api_key, get_model
 from services.llm_engine import gemini_error_message
 from services.vision_engine import analyze_crop_image
 from utils.state_manager import reserve_ai_request
 
-st.markdown(
-    '<section class="hero-panel"><div class="eyebrow">Computer vision · early triage</div>'
-    '<h1>Scan a crop symptom.</h1><p>Get a cautious, image-based assessment — not a substitute '
-    'for local diagnosis.</p></section>',
-    unsafe_allow_html=True,
+render_page_header(
+    "Crop health scanner",
+    "Check visible symptoms and get possible causes and lower-risk next steps.",
+    "scan", "⌖",
 )
-st.markdown(
-    '<div class="dropzone-note">Drop a clear, close-up crop photo below · JPEG, PNG, or WebP · up to 10 MB</div>',
-    unsafe_allow_html=True,
-)
-st.caption("When you analyze a photo, its image bytes are sent to Google Gemini using your configured API key.")
-upload = st.file_uploader("Crop photo", type=["jpg", "jpeg", "png", "webp"],
-                          label_visibility="collapsed", max_upload_size=10)
+upload_col, guide_col = st.columns([1.6, 1], gap="medium")
+with upload_col, st.container(border=True, key="scan_upload"):
+    st.subheader("Upload a crop photo")
+    upload = st.file_uploader("Crop photo", type=["jpg", "jpeg", "png", "webp"],
+                              label_visibility="collapsed", max_upload_size=10)
+    st.caption("Your photo is sent to Gemini when you select Analyze photo.")
+with guide_col, st.container(border=True, key="scan_guide"):
+    st.subheader("Get a clearer scan")
+    st.markdown("1. Photograph the affected area in daylight.\n"
+                "2. Keep the symptoms sharp and close.\n"
+                "3. Include healthy growth for comparison if possible.")
 if upload:
     image = upload.getvalue()
     response_language = st.session_state["response_language"]
@@ -39,7 +43,8 @@ if upload:
         if mime_type not in {"image/jpeg", "image/png", "image/webp"}:
             st.error("This file could not be opened as a JPEG, PNG, or WebP photo.")
             st.stop()
-        st.image(image, caption=upload.name, width=480)
+        with st.container(border=True, key="scan_preview"):
+            st.image(image, caption=upload.name, width=480)
         fingerprint = hashlib.sha256(response_language.encode("utf-8") + b"\0" + image).hexdigest()
         completed = next(
             (scan for scan in st.session_state["disease_scans"]
@@ -105,5 +110,3 @@ if upload:
                 else:
                     st.caption("No chemical treatment was suggested.")
             st.caption(f"Gemini model: {completed['model']} · This is preliminary AI triage, not a diagnosis.")
-else:
-    st.caption("Good light and a sharp image of both the affected area and healthy nearby growth can help.")

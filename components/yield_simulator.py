@@ -3,21 +3,22 @@ from __future__ import annotations
 import plotly.graph_objects as go
 import streamlit as st
 
+from components.page_header import render_page_header
 from services.analytics import estimate_yield
 
-st.markdown(
-    '<section class="hero-panel"><div class="eyebrow">Scenario planner · not a guarantee</div>'
-    '<h1>Explore a season.</h1><p>Adjust assumptions to compare an illustrative yield and revenue '
-    'scenario. Replace the defaults with local records before making decisions.</p></section>',
-    unsafe_allow_html=True,
+render_page_header(
+    "Yield & finance",
+    "Explore how rainfall, fertilizer spending, and market price affect a season’s estimated yield and revenue.",
+    "yield", "↗",
 )
 
 
 @st.fragment
 def render_simulator() -> None:
     profile = st.session_state["farm_profile"]
-    controls, chart_col = st.columns([1, 1.7], gap="large")
-    with controls:
+    totals = st.container(key="yield_totals")
+    controls, chart_col = st.columns([1, 1.7], gap="medium")
+    with controls, st.container(border=True, key="yield_controls"):
         st.subheader("Scenario inputs")
         crop = st.text_input("Crop", value="Maize", key="sim_crop")
         rainfall = st.slider("Season rainfall simulation (mm)", 0, 1800, 650, 25, key="sim_rainfall")
@@ -43,16 +44,16 @@ def render_simulator() -> None:
     price_trend = [
         market_price * (1 + price_change * step / 600) for step in range(7)
     ]
-    with chart_col:
+    with chart_col, st.container(border=True, key="yield_chart"):
         st.subheader("Yield and price scenario")
         figure = go.Figure()
         figure.add_trace(go.Bar(
             x=months, y=[result["yield_per_ha"]] * len(months),
-            name="Illustrative yield (tonnes/ha)", marker_color="#10b981", opacity=.74,
+            name="Illustrative yield (tonnes/ha)", marker_color="#6fb681", opacity=.83,
         ))
         figure.add_trace(go.Scatter(
             x=months, y=price_trend, name=f"Illustrative price ({currency}/tonne)",
-            yaxis="y2", line={"color": "#64ffda", "width": 3},
+            yaxis="y2", line={"color": "#d4ee89" if st.session_state["active_theme"] == "dark" else "#426b16", "width": 3},
         ))
         text_color = "#e6f1ff" if st.session_state.get("active_theme") == "dark" else "#0f172a"
         figure.update_layout(
@@ -67,19 +68,19 @@ def render_simulator() -> None:
         )
         st.plotly_chart(figure, width="stretch", config={"displayModeBar": False})
 
-    metric1, metric2, metric3 = st.columns(3)
+    metric1, metric2, metric3 = totals.columns(3)
     with metric1:
-        yield_value = f"{result['total_yield']:.2f} t" if farm_size else "Set farm size"
+        yield_value = f"{result['total_yield']:.2f} t" if farm_size else "—"
         st.metric("Total scenario yield", yield_value,
-                  f"{result['yield_per_ha']:.2f} t/ha")
+                  f"{result['yield_per_ha']:.2f} t/ha", delta_color="off")
     with metric2:
-        revenue = f"{currency} {result['total_yield'] * market_price:,.0f}" if farm_size else "Set farm size"
+        revenue = f"{currency} {result['total_yield'] * market_price:,.0f}" if farm_size else "—"
         st.metric("Illustrative gross revenue", revenue,
-                  "Before costs, losses, and transport")
+                  "Before costs, losses, and transport", delta_color="off")
     with metric3:
-        total_investment = f"{currency} {investment * farm_size:,.0f}" if farm_size else "Set farm size"
+        total_investment = f"{currency} {investment * farm_size:,.0f}" if farm_size else "—"
         st.metric("Fertilizer investment", total_investment,
-                  "Scenario input only")
+                  "Scenario input only", delta_color="off")
     st.session_state["yield_simulation"] = {
         **result,
         "rainfall_mm": rainfall,

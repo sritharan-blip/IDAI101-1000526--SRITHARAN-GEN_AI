@@ -35,6 +35,7 @@ import requests  # noqa: E402
 import streamlit as st  # noqa: E402
 
 from google.genai import types as genai_types
+from components.page_header import render_page_header
 from config.settings import DATA_DIR, MODEL_FALLBACKS, get_api_key, get_model
 from services.llm_engine import gemini_error_message, get_model_candidates, is_model_unavailable_error
 from utils.cache_handlers import get_gemini_client
@@ -724,23 +725,23 @@ CFG = {"api_key": api_key, "demo": demo or not api_key, "model": model_pick,
 # ─────────────────────────────────────────────────────────────────────────────
 # 12. PAGE
 # ─────────────────────────────────────────────────────────────────────────────
-st.markdown(
-    """<div class="hero-panel"><h1>🌾 Smart Farming Assistant</h1>
-    <p>Clear, region-specific farming advice powered by Gemini — with the <b>reason</b> behind every tip.
-    Built for farmers in 🇮🇳 India · 🇬🇭 Ghana · 🇨🇦 Canada.</p></div>""",
-    unsafe_allow_html=True)
+render_page_header(
+    "Advisor & insights",
+    "Build a regional farm action plan, compare Gemini prompts, or review feedback.",
+    "advisor", "✧",
+)
 if CFG["demo"]:
     st.info("🧪 **Demo mode** is on – answers come from built-in samples, not Gemini. "
             "Add your API key in the sidebar for live AI advice.")
     if CFG["language"] != "English":
         st.warning("Built-in demo samples are in English. Live Gemini answers use the selected response language.")
 
-tab_adv, tab_val, tab_ins, tab_about = st.tabs(["🌱 Advisor", "🧪 Validation Lab", "📊 Insights", "ℹ️ About"])
+tab_adv, tab_val, tab_ins, tab_about = st.tabs(["Advisor", "Validation Lab", "Insights", "About"])
 
 # ─────────────────────────── TAB 1 · ADVISOR ───────────────────────────
 with tab_adv:
-    left, right = st.columns([1, 1.25], gap="large")
-    with left:
+    left, right = st.columns([1, 1.25], gap="medium")
+    with left, st.container(border=True, key="advisor_inputs"):
         st.subheader("Tell us about your farm")
         country = st.selectbox("Country", list(COUNTRIES), format_func=lambda c: f"{COUNTRIES[c]['flag']} {c}")
         if country == "Other":
@@ -766,7 +767,7 @@ with tab_adv:
         use_weather = st.checkbox("🌦️ Include live 7-day weather for my location", value=True)
         go = st.button("🌾 Get advice", type="primary", width="stretch")
 
-    with right:
+    with right, st.container(border=True, key="advisor_result"):
         if go:
             now = time.time()
             if not region.strip():
@@ -840,13 +841,9 @@ with tab_adv:
                     st.markdown(a)
             feedback_widget(st.session_state["req_id"], inp, res)
         else:
-            st.markdown("### 👈 Fill in your farm details and press **Get advice**")
-            st.markdown("You'll get **simple bullet recommendations**, a **step-by-step plan**, **warnings** and a "
-                        "**'why'** for every suggestion.")
-            st.markdown("**Try these quick examples:**")
-            st.markdown("- 🇮🇳 *Rajasthan · August · What to grow* (sandy, rain-fed)\n"
-                        "- 🇬🇭 *Ashanti · Maize · Pests & diseases*\n"
-                        "- 🇨🇦 *Saskatchewan · May · Sowing*")
+            st.subheader("Your action plan")
+            st.markdown("Enter your farm details and select **Get advice** to see practical steps, "
+                        "why they fit your farm, and risks to check.")
 
 # ─────────────────────────── TAB 2 · VALIDATION LAB ───────────────────────────
 with tab_val:
