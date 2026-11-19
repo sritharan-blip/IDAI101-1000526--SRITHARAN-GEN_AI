@@ -1,10 +1,13 @@
 from __future__ import annotations
 
 import hashlib
+from io import BytesIO
 
 import streamlit as st
+from PIL import Image
 
 from config.settings import get_api_key, get_model
+from services.llm_engine import gemini_error_message
 from services.vision_engine import analyze_crop_image
 from utils.state_manager import reserve_ai_request
 
@@ -27,6 +30,15 @@ if upload:
     if len(image) > 10 * 1024 * 1024:
         st.error("This image is larger than 10 MB. Please upload a smaller crop photo.")
     else:
+        try:
+            with Image.open(BytesIO(image)) as photo:
+                mime_type = Image.MIME.get(photo.format)
+                photo.load()
+        except (OSError, Image.DecompressionBombError):
+            mime_type = None
+        if mime_type not in {"image/jpeg", "image/png", "image/webp"}:
+            st.error("This file could not be opened as a JPEG, PNG, or WebP photo.")
+            st.stop()
         st.image(image, caption=upload.name, width=480)
         fingerprint = hashlib.sha256(response_language.encode("utf-8") + b"\0" + image).hexdigest()
         completed = next(
@@ -38,7 +50,7 @@ if upload:
             api_key = get_api_key()
             if not api_key:
                 st.info("Add a Gemini API key in the sidebar to analyze this photo.")
-            else:
+            elif st.button("Analyze photo", type="primary"):
                 blocked_reason = reserve_ai_request()
                 if blocked_reason:
                     st.warning(blocked_reason)
@@ -47,7 +59,7 @@ if upload:
                         try:
                             result = analyze_crop_image(
                                 image,
-                                upload.type or "image/jpeg",
+                                mime_type,
                                 api_key,
                                 get_model(),
                                 response_language,
@@ -59,7 +71,7 @@ if upload:
                             completed = result
                         except Exception as exc:
                             status.update(label="Could not analyze image", state="error", expanded=False)
-                            st.error(f"Gemini image analysis failed: {str(exc)[:260]}")
+                            st.error(gemini_error_message(exc))
 
         if completed:
             confidence = completed["confidence"]

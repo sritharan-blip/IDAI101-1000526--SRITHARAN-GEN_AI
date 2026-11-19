@@ -1,0 +1,49 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 300" role="img" aria-labelledby="title desc">
+  <title id="title">AgroNova • Farm intelligence</title>
+  <desc id="desc">An animated sunrise over layered green fields with a gently swaying sprout.</desc>
+  <defs>
+    <linearGradient id="sky" x2="1" y2="1">
+      <stop stop-color="#071d23"/>
+      <stop offset="1" stop-color="#225747"/>
+    </linearGradient>
+    <linearGradient id="field" x2="0" y2="1">
+      <stop stop-color="#317956"/>
+      <stop offset="1" stop-color="#103a33"/>
+    </linearGradient>
+    <radialGradient id="light">
+      <stop stop-color="#f2ce7a" stop-opacity=".45"/>
+      <stop offset="1" stop-color="#f2ce7a" stop-opacity="0"/>
+    </radialGradient>
+    <clipPath id="frame"><rect width="1200" height="300" rx="28"/></clipPath>
+  </defs>
+  <style>
+    .sunrise { animation: sunrise 7s ease-in-out infinite alternate; }
+    .sprout { transform-origin: 950px 234px; animation: wind 4.5s ease-in-out infinite alternate; }
+    @keyframes sunrise { from { transform: translateY(8px); } to { transform: translateY(-12px); } }
+    @keyframes wind { from { transform: rotate(-4deg); } to { transform: rotate(4deg); } }
+    @media (prefers-reduced-motion: reduce) { .sunrise, .sprout { animation: none; } }
+  </style>
+  <g clip-path="url(#frame)">
+    <rect width="1200" height="300" fill="url(#sky)"/>
+    <g class="sunrise">
+      <circle cx="966" cy="131" r="167" fill="url(#light)"/>
+      <circle cx="966" cy="131" r="45" fill="#efcc7d"/>
+    </g>
+    <path d="M524 300c115-78 252-128 368-120 111 8 202 38 308-8v128Z" fill="#2a624c"/>
+    <path d="M380 300c152-38 256-77 421-64 168 14 254-37 399-50v114Z" fill="url(#field)"/>
+    <g fill="none" stroke="#aad58c" stroke-opacity=".36" stroke-width="2">
+      <path d="M701 300c170-35 328-84 499-94"/>
+      <path d="M797 300c140-34 268-66 403-74"/>
+      <path d="M891 300c108-24 211-48 309-53"/>
+      <path d="M985 300c77-16 145-30 215-33"/>
+    </g>
+    <g class="sprout" fill="#bfe7a4" stroke="#103a33" stroke-width="2">
+      <path d="M950 234c1-31-19-57-54-62 5 30 24 50 54 47"/>
+      <path d="M950 234c-3-32 14-60 49-73-1 32-17 56-47 60"/>
+      <path d="M950 238c0-22-8-38-21-52m21 47c3-23 13-43 29-56" fill="none" stroke="#76a86c"/>
+    </g>
+    <path d="M67 81h46" stroke="#edcc7f" stroke-width="3"/>
+    <text x="67" y="165" fill="#f5faee" font-family="Georgia, serif" font-size="90" font-weight="bold">AgroNova</text>
+    <text x="72" y="213" fill="#c5e8d0" font-family="Arial, sans-serif" font-size="24" letter-spacing="1">Farm intelligence powered by Gemini</text>
+  </g>
+</svg>

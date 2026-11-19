@@ -20,10 +20,10 @@ import csv
 import datetime as dt
 import io
 import json
-import os
 import re
 import time
 import uuid
+from html import escape
 from pathlib import Path
 
 import matplotlib
@@ -34,15 +34,15 @@ import pandas as pd  # noqa: E402
 import requests  # noqa: E402
 import streamlit as st  # noqa: E402
 
-from google import genai as genai_new
 from google.genai import types as genai_types
-from config.settings import MODEL_FALLBACKS
+from config.settings import DATA_DIR, MODEL_FALLBACKS, get_api_key, get_model
+from services.llm_engine import gemini_error_message, get_model_candidates, is_model_unavailable_error
+from utils.cache_handlers import get_gemini_client
 
 # ─────────────────────────────────────────────────────────────────────────────
 # 0. CONFIG
 # ─────────────────────────────────────────────────────────────────────────────
-DATA_DIR = Path(os.environ.get("GENAI_DATA_DIR", "data"))
-DATA_DIR.mkdir(exist_ok=True)
+DATA_DIR.mkdir(parents=True, exist_ok=True)
 USAGE_LOG = DATA_DIR / "usage_log.csv"
 FEEDBACK_LOG = DATA_DIR / "feedback.csv"
 VALIDATION_LOG = DATA_DIR / "validation_results.csv"
@@ -141,32 +141,6 @@ def read_csv(path: Path) -> pd.DataFrame:
         return pd.DataFrame()
 
 
-def get_api_key() -> str:
-    """Key priority: Streamlit secrets -> environment variable -> sidebar box."""
-    try:
-        if "GEMINI_API_KEY" in st.secrets:
-            return str(st.secrets["GEMINI_API_KEY"])
-    except Exception:
-        pass
-    return os.environ.get("GEMINI_API_KEY", "") or st.session_state.get("sidebar_key", "")
-
-
-@st.cache_data(ttl=900, show_spinner=False)
-def list_gemini_models(api_key: str) -> list[str]:
-    """Return text-generation Gemini models currently available to this API key."""
-    client = genai_new.Client(api_key=api_key)
-    models = client.models.list()
-    available = []
-    for model in models:
-        name = (getattr(model, "name", "") or "").rsplit("/", 1)[-1]
-        actions = getattr(model, "supported_actions", None) or []
-        if name.startswith("gemini-") and "generateContent" in actions:
-            available.append(name)
-
-    priority = {name: index for index, name in enumerate(MODEL_CHOICES)}
-    return sorted(set(available), key=lambda name: (priority.get(name, len(priority)), name))
-
-
 # ─────────────────────────────────────────────────────────────────────────────
 # 3. PROMPTS  (Step 5 – prompt optimisation: V1 baseline  ->  V2 optimised)
 # ─────────────────────────────────────────────────────────────────────────────
@@ -239,7 +213,7 @@ def _generate(name: str, prompt: str, api_key: str, temperature: float, max_toke
     cfg = {"temperature": temperature, "max_output_tokens": max_tokens}
     if json_mode:
         cfg["response_mime_type"] = "application/json"
-    client = genai_new.Client(api_key=api_key)
+    client = get_gemini_client(api_key)
     return (client.models.generate_content(
         model=name,
         contents=prompt,
@@ -261,11 +235,11 @@ def call_gemini(prompt: str, api_key: str, model: str, temperature: float,
             last_err = GeminiError("Empty response (possibly blocked by safety filters).")
         except Exception as e:  # noqa: BLE001
             last_err = e
-            msg = str(e).lower()
-            # only fall back for "model missing / unsupported"; stop on key/quota problems
-            if not any(k in msg for k in ("not found", "404", "not supported", "deprecated", "no longer")):
+            if not is_model_unavailable_error(e):
                 break
-    raise GeminiError(str(last_err) if last_err else "Unknown Gemini error")
+    if isinstance(last_err, GeminiError):
+        raise last_err
+    raise GeminiError(gemini_error_message(last_err)) from last_err
 
 
 # ─────────────────────────────────────────────────────────────────────────────
@@ -550,7 +524,7 @@ def conf_pill(c: str) -> str:
 
 def render_advice(inp: dict, res: dict) -> None:
     d = res["data"]
-    st.markdown(f'<div class="summary">{d["summary"]}</div>', unsafe_allow_html=True)
+    st.markdown(f'<div class="summary">{escape(str(d["summary"]))}</div>', unsafe_allow_html=True)
     st.markdown(
         conf_pill(d["confidence"])
         + f'<span class="pill">{inp["country"]} · {inp["region"]}</span>'
@@ -566,7 +540,7 @@ def render_advice(inp: dict, res: dict) -> None:
                 st.markdown(f"#### {r['icon']} {r['name']}")
                 st.markdown(r["action"])
                 if r["why"]:
-                    st.markdown(f'<div class="why">💡 <b>Why:</b> {r["why"]}</div>', unsafe_allow_html=True)
+                    st.markdown(f'<div class="why">💡 <b>Why:</b> {escape(str(r["why"]))}</div>', unsafe_allow_html=True)
                 if r["timing"]:
                     st.caption(f"🕒 {r['timing']}")
     if d["steps"]:
@@ -722,35 +696,18 @@ def validation_report(df: pd.DataFrame) -> str:
 with st.sidebar:
     st.markdown("## 🌾 Gen AI Farming")
     st.caption("AgroNova pilot · FA-2")
-    st.text_input("Gemini API key", type="password", key="sidebar_key",
-                  help="Get a free key at aistudio.google.com. On Streamlit Cloud put it in Secrets instead.",
-                  placeholder="Paste key or use Secrets")
     api_key = get_api_key()
-    model_choices = MODEL_CHOICES
-    if api_key:
-        try:
-            available_models = list_gemini_models(api_key)
-            model_choices = available_models or MODEL_CHOICES
-            if not available_models:
-                st.warning("No Gemini models supporting text generation were returned for this key.")
-        except Exception:
-            st.warning("Gemini's model list couldn't be loaded. Check the key and connection; current model names "
-                       "and custom model entry are still available.")
+    model_pick = get_model()
+    model_choices = get_model_candidates(api_key, model_pick) if api_key else MODEL_CHOICES
     demo = st.toggle("Demo mode (no API key)", value=not bool(api_key),
                      help="Uses built-in sample responses so you can explore the UI offline.")
     if not api_key and not demo:
         st.error("Add a Gemini API key or switch on Demo mode.")
     st.markdown("##### Model settings")
-    model_pick = st.selectbox(
-        "Gemini model",
-        model_choices,
-        index=0,
-        help="Gemini 4 Argon is the newest flagship; Flash is faster and Flash-Lite is the lower-cost option.",
-    )
-    custom_model = st.text_input("…or custom model name", placeholder="e.g. gemini-4-argon")
+    st.caption(f"Model: {model_pick} · change it under Gemini connection.")
     temperature = st.slider("Temperature (creativity)", 0.0, 1.5, 0.4, 0.1,
                             help="Lower = safer, more consistent. Higher = more varied.")
-    max_tokens = st.slider("Max response length (tokens)", 512, 4096, 2048, 256)
+    max_tokens = st.slider("Max response length (tokens)", 512, 8192, 4096, 256)
     language = st.session_state["response_language"]
     st.markdown("##### Prompt version")
     version = st.radio("Prompt", ["V2", "V1"], horizontal=True,
@@ -760,7 +717,7 @@ with st.sidebar:
     st.caption(f"Queries this session: {st.session_state.get('count', 0)}/{MAX_QUERIES_PER_SESSION}")
     st.caption("Built with Streamlit + Google Gemini + Open-Meteo.")
 
-CFG = {"api_key": api_key, "demo": demo or not api_key, "model": custom_model.strip() or model_pick,
+CFG = {"api_key": api_key, "demo": demo or not api_key, "model": model_pick,
        "model_choices": model_choices,
        "temperature": temperature, "max_tokens": max_tokens, "language": language}
 
